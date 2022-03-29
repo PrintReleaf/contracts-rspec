@@ -5,4 +5,3 @@ gemspec
 
 gem "rspec"
 gem "contracts"
-gem "byebug"
