@@ -14,6 +14,11 @@ class Example
   def do_something(something)
     something.call
   end
+
+  Contract String => Something
+  def returns_something
+    Something.new
+  end
 end
 
 RSpec.describe Example do
@@ -21,7 +26,7 @@ RSpec.describe Example do
 
   context "without Contracts::RSpec::Mocks included" do
     it "violates contract" do
-      expect { Example.new.do_something(something) }
+      expect { subject.do_something(something) }
         .to raise_error(ContractError, /Expected: Something/)
     end
   end
@@ -30,7 +35,14 @@ RSpec.describe Example do
     include Contracts::RSpec::Mocks
 
     it "succeeds contract" do
-      expect(Example.new.do_something(something)).to eq(:something_is_done)
+      expect(subject.do_something(something)).to eq(:something_is_done)
+    end
+
+    it "violates return value contract" do
+      something = instance_double(Something)
+      allow(Something).to receive(:new).and_return(something)
+
+      Example.new.returns_something
     end
   end
 end
