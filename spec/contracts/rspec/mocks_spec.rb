@@ -1,4 +1,10 @@
-class Plant
+class Organism
+end
+
+class Eukaryote < Organism
+end
+
+class Plant < Eukaryote
   include Contracts
 
   Contract None => :success
@@ -23,6 +29,8 @@ class Example
 end
 
 RSpec.describe Example do
+  let(:organism) { instance_double(Organism) }
+  let(:eukaryote) { instance_double(Eukaryote) }
   let(:plant) { instance_double(Plant, call: :success) }
   let(:tree) { instance_double(Tree, call: :success) }
   let(:oak) { instance_double(Oak, call: :success) }
@@ -50,6 +58,20 @@ RSpec.describe Example do
     context "when doubled class is a descendant of contract class" do
       it "succeeds contract" do
         expect(subject.test(oak)).to eq(:success)
+      end
+    end
+
+    context "when doubled class is the superclass of contract class" do
+      it "violates contract" do
+        expect { subject.test(eukaryote) }
+          .to raise_error(ContractError, /Expected: Plant/)
+      end
+    end
+
+    context "when doubled class is an ancestor of contract class" do
+      it "violates contract" do
+        expect { subject.test(organism) }
+          .to raise_error(ContractError, /Expected: Plant/)
       end
     end
   end
