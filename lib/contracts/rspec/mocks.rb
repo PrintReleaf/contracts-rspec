@@ -3,8 +3,9 @@ module Contracts
     module Mocks
       def instance_double(klass, *args)
         super.tap do |double|
-          allow(double).to receive(:is_a?).with(klass).and_return(true)
-          allow(double).to receive(:is_a?).with(ParamContractError).and_return(klass.is_a?(ParamContractError))
+          allow(double).to receive(:is_a?).with(anything) do |other|
+            klass <= other
+          end
         end
       end
     end

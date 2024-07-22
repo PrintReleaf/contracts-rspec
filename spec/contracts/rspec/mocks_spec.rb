@@ -1,33 +1,44 @@
-class Something
+class Organism
+end
+
+class Eukaryote < Organism
+end
+
+class Plant < Eukaryote
   include Contracts
 
-  Contract None => :something_is_done
+  Contract None => :success
   def call
-    :something_is_done
+    :success
   end
+end
+
+class Tree < Plant
+end
+
+class Oak < Tree
 end
 
 class Example
   include Contracts
 
-  Contract Something => :something_is_done
-  def do_something(something)
-    something.call
-  end
-
-  Contract String => Something
-  def returns_something
-    Something.new
+  Contract Plant => :success
+  def test(instance)
+    instance.call
   end
 end
 
 RSpec.describe Example do
-  let(:something) { instance_double(Something, call: :something_is_done) }
+  let(:organism) { instance_double(Organism) }
+  let(:eukaryote) { instance_double(Eukaryote) }
+  let(:plant) { instance_double(Plant, call: :success) }
+  let(:tree) { instance_double(Tree, call: :success) }
+  let(:oak) { instance_double(Oak, call: :success) }
 
   context "without Contracts::RSpec::Mocks included" do
     it "violates contract" do
-      expect { subject.do_something(something) }
-        .to raise_error(ContractError, /Expected: Something/)
+      expect { subject.test(plant) }
+        .to raise_error(ContractError, /Expected: Plant/)
     end
   end
 
@@ -35,14 +46,33 @@ RSpec.describe Example do
     include Contracts::RSpec::Mocks
 
     it "succeeds contract" do
-      expect(subject.do_something(something)).to eq(:something_is_done)
+      expect(subject.test(plant)).to eq(:success)
     end
 
-    it "violates return value contract" do
-      something = instance_double(Something)
-      allow(Something).to receive(:new).and_return(something)
+    context "when doubled class is a subclass of contract class" do
+      it "succeeds contract" do
+        expect(subject.test(tree)).to eq(:success)
+      end
+    end
 
-      Example.new.returns_something
+    context "when doubled class is a descendant of contract class" do
+      it "succeeds contract" do
+        expect(subject.test(oak)).to eq(:success)
+      end
+    end
+
+    context "when doubled class is the superclass of contract class" do
+      it "violates contract" do
+        expect { subject.test(eukaryote) }
+          .to raise_error(ContractError, /Expected: Plant/)
+      end
+    end
+
+    context "when doubled class is an ancestor of contract class" do
+      it "violates contract" do
+        expect { subject.test(organism) }
+          .to raise_error(ContractError, /Expected: Plant/)
+      end
     end
   end
 end
